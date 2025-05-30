@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+
+# Copy csproj and restore dependencies
+COPY ["TechnicalStationService/TechnicalStationService.csproj", "TechnicalStationService/"]
+RUN dotnet restore "TechnicalStationService/TechnicalStationService.csproj"
+
+# Copy the rest of the code
+COPY . .
+WORKDIR "/src/TechnicalStationService"
+
+# Build and publish
+RUN dotnet build "TechnicalStationService.csproj" -c Release -o /app/build
+RUN dotnet publish "TechnicalStationService.csproj" -c Release -o /app/publish
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "TechnicalStationService.dll"] 

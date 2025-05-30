@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+
+# Copy csproj and restore dependencies
+COPY ["MedicalService/MedicalService.csproj", "MedicalService/"]
+RUN dotnet restore "MedicalService/MedicalService.csproj"
+
+# Copy the rest of the code
+COPY . .
+WORKDIR "/src/MedicalService"
+
+# Build and publish
+RUN dotnet build "MedicalService.csproj" -c Release -o /app/build
+RUN dotnet publish "MedicalService.csproj" -c Release -o /app/publish
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "MedicalService.dll"] 

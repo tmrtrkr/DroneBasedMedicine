@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Database Service
   postgres:
     image: postgres:latest
     container_name: medical_db
@@ -13,6 +14,69 @@ services:
     volumes:
       - ./init-scripts:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medical_network
+
+  # Medical Service (person, medicine, order, pharmacy, prescription)
+  medical_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.medical
+    container_name: medical_service
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=medical_system
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "5001:5001"
+    networks:
+      - medical_network
+
+  # Drone Service
+  drone_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone_service
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=medical_system
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "5002:5002"
+    networks:
+      - medical_network
+
+  # Technical Station Service
+  technical_station_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.technical
+    container_name: technical_station_service
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=medical_system
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "5003:5003"
+    networks:
+      - medical_network
+
+networks:
+  medical_network:
+    driver: bridge
 
 volumes:
   postgres_data: 
